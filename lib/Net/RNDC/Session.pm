@@ -38,6 +38,7 @@ sub new {
 	my @optional_args = qw(
 		is_client
 		is_server
+		algorithm
 	);
 
 	for my $r (@required_subs, @required_args) {
@@ -110,6 +111,7 @@ sub _is_server { return $_[0]->{'is_server'} }
 sub _key       { return $_[0]->{'key'}       }
 sub _nonce     { return $_[0]->{'nonce'}     }
 sub _command   { return $_[0]->{'command'}   }
+sub _algorithm { return $_[0]->{'algorithm'} }
 
 # Entry point. Always.
 sub start {
@@ -147,6 +149,7 @@ sub _got_start {
 		# Client step 1: send a request packet with no data section
 		my $packet = Net::RNDC::Packet->new(
 			key => $self->_key,
+			algorithm => $self->_algorithm // 'MD5',
 		);
 
 		$self->_state('want_write');
@@ -164,7 +167,10 @@ sub _got_read {
 	my ($self, $data) = @_;
 
 	if ($self->_is_client) {
-		my $packet = Net::RNDC::Packet->new(key => $self->_key);
+		my $packet = Net::RNDC::Packet->new(
+			key => $self->_key,
+			algorithm => $self->_algorithm // 'MD5',
+		);
 
 		if (!$packet->parse($data)) {
 			$self->_state('want_error');
@@ -183,6 +189,7 @@ sub _got_read {
 				key => $self->_key,
 				nonce => $nonce,
 				data => {type => $self->_command},
+				algorithm => $self->_algorithm // 'MD5',
 			);
 
 			$self->_state('want_write');
@@ -197,7 +204,10 @@ sub _got_read {
 			return $self->_run_want('want_finish', $response);
 		}
 	} else {
-		my $packet = Net::RNDC::Packet->new(key => $self->_key);
+		my $packet = Net::RNDC::Packet->new(
+			key => $self->_key,
+			algorithm => $self->_algorithm // 'MD5',
+		);
 
 		if (!$packet->parse($data)) {
 			$self->_state('want_error');
@@ -215,6 +225,7 @@ sub _got_read {
 			my $challenge = Net::RNDC::Packet->new(
 				key => $self->_key,
 				nonce => $nonce,
+				algorithm => $self->_algorithm // 'MD5',
 			);
 
 			$self->_state('want_write');
@@ -243,6 +254,7 @@ sub _got_read {
 			my $response = Net::RNDC::Packet->new(
 				key => $self->_key,
 				data => {text => $self->_command},
+				algorithm => $self->_algorithm // 'MD5',
 			);
 
 			$self->_state('want_write');

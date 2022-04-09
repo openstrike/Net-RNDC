@@ -33,6 +33,7 @@ sub new {
 		version
 		data
 		nonce
+		algorithm
 	);
 
 	for my $r (@required_args) {
@@ -51,6 +52,10 @@ sub new {
 
 	if (exists $args{nonce} && ($args{nonce} || '') !~ /^\d+\z/) {
 		croak("Argument 'nonce' must be a number");
+	}
+
+	if (exists $args{algorithm} && ($args{algorithm} || '') !~ /^SHA1|MD5$/) {
+		croak("Argument 'algorithm' must be a SHA1 or MD5");
 	}
 
 	my %object = (
@@ -217,7 +222,8 @@ sub _unsigned_data {
 sub _sign {
 	my ($self, $data) = @_;
 
-	my $hmac = Digest::HMAC_MD5->new(decode_base64($self->{key}));
+	my $hashmod = $self->{algo} ? "Digest::$self->{algo}" : 'Digest::MD5';
+	my $hmac = Digest::HMAC->new(decode_base64($self->{key}), $hashmod);
 
 	$hmac->add($data);
 

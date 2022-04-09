@@ -36,6 +36,7 @@ my @optional_args = qw(
 	host
 	port
 	sock
+	algorithm
 );
 
 sub new {
@@ -86,6 +87,7 @@ sub do {
 	my $port = $self->{port};
 	my $key  = $self->{key};
 	my $sock = $self->{sock};
+	my $algorithm = $self->{algorithm};
 
 	if (%override) {
 		my %args = $self->_parse_args(
@@ -93,6 +95,7 @@ sub do {
 			port => $port,
 			key  => $key,
 			sock => $sock,
+			algorithm => $self->{algorithm},
 			%override,
 		);
 
@@ -100,6 +103,7 @@ sub do {
 		$port = $args{port};
 		$key  = $args{key};
 		$sock = $args{sock};
+		$algorithm = $args{algorithm};
 	}
 
 	$self->_check_do_args(
@@ -107,6 +111,7 @@ sub do {
 		port => $port,
 		key  => $key,
 		sock => $sock,
+		algorithm => $algorithm,
 	);
 
 	my $c = $sock->new(
